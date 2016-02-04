@@ -61,6 +61,7 @@ public class BrowserView {
     private Button myBackButton;
     private Button myNextButton;
     private Button myHomeButton;
+    private Button myAddFavoriteButton;
     // favorites
     private ComboBox<String> myFavorites;
     // get strings from resource file
@@ -84,19 +85,19 @@ public class BrowserView {
         enableButtons();
         // create scene to hold UI
         myScene = new Scene(root, DEFAULT_SIZE.width, DEFAULT_SIZE.height);
-        //myScene.getStylesheets().add(DEFAULT_RESOURCE_PACKAGE + STYLESHEET);
+        myScene.getStylesheets().add(DEFAULT_RESOURCE_PACKAGE + STYLESHEET);
     }
 
     /**
      * Display given URL.
      */
     public void showPage (String url) {
-        URL valid = myModel.go(url);
-        if (valid != null) {
-            update(valid);
+        try {
+        	URL valid = myModel.go(url);
+        	update(valid);
         }
-        else {
-            showError("Could not load " + url);
+         catch (BrowserException be){
+            showError(be.getMessage());
         }
     }
 
@@ -126,12 +127,22 @@ public class BrowserView {
 
     // move to the next URL in the history
     private void next () {
-        update(myModel.next());
+    	try{
+    		update(myModel.next());
+    	}
+    	catch (BrowserException e){
+    		showError(e.getMessage());
+    	}
     }
 
     // move to the previous URL in the history
     private void back () {
+    	try{
         update(myModel.back());
+    	}
+    	catch (BrowserException e){
+    		showError(e.getMessage());
+    	}
     }
 
     // change current URL to the home page, if set
@@ -141,9 +152,14 @@ public class BrowserView {
 
     // change page to favorite choice
     private void showFavorite (String favorite) {
+    	try {
         showPage(myModel.getFavorite(favorite).toString());
+    	}
         // reset favorites ComboBox so the same choice can be made again
-        myFavorites.setValue(null);
+       // myFavorites.setValue(null);
+    	catch (BrowserException e){
+    		showError(e.getMessage());
+    	}
     }
 
     // update just the view to display given URL
@@ -226,6 +242,11 @@ public class BrowserView {
         HBox result = new HBox();
         myFavorites = new ComboBox<String>();
         // ADD REST OF CODE HERE
+        myAddFavoriteButton = makeButton("AddFavoriteCommand", event -> addFavorite());
+        result.getChildren().add(myAddFavoriteButton);
+        myFavorites.setOnAction(event -> showFavorite(myFavorites.getSelectionModel().getSelectedItem()));
+        result.getChildren().add(myFavorites);
+        
         result.getChildren().add(makeButton("SetHomeCommand", event -> {
             myModel.setHome();
             enableButtons();
